@@ -6,7 +6,7 @@ import { getActivePinia } from 'pinia';
 const request = axios.create({
   // baseURL: "http://localhost:8088", // API 基础路径
   // baseURL: 'http://59.153.164.121:8088',
-  // baseURL: 'http://localhost:8888',
+  baseURL: 'http://localhost:8888',
   timeout: 600000, // 请求超时时间
 });
 

@@ -104,15 +104,3 @@ export function toggleFavorite(fileId:string) {
     }
   });
 }
-
-// 更新文件审核状态
-export function updateFileAuditStatus(fileId:string, audited:boolean) {
-  return request({
-    url: '/wallpaper/file/audit',
-    method: 'put',
-    data:{
-      fileId: fileId,
-      audited: audited
-    }
-  });
-}

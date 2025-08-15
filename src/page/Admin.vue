@@ -79,7 +79,7 @@
                   @click="auditFile(file)" 
                   class="action-button audit-button"
                 >
-                  审核
+                  {{ file.status }}
                 </button>
                 <button 
                   @click="deleteFile(file)" 
@@ -129,6 +129,28 @@
       <div v-if="activeTab === 'users'" class="tab-content">
         <h2>用户管理</h2>
         <div class="user-management">
+          <div class="user-filters">
+            <div class="filter-buttons">
+              <button 
+                :class="['filter-button', { active: userFilterStatus === 'all' }]"
+                @click="filterUsersByStatus('all')"
+              >
+                全部用户
+              </button>
+              <button 
+                :class="['filter-button', { active: userFilterStatus === 'admin' }]"
+                @click="filterUsersByStatus('admin')"
+              >
+                管理员
+              </button>
+              <button 
+                :class="['filter-button', { active: userFilterStatus === 'user' }]"
+                @click="filterUsersByStatus('user')"
+              >
+                普通用户
+              </button>
+            </div>
+          </div>
           <div class="search-bar">
             <input 
               v-model="userSearchQuery" 
@@ -143,38 +165,38 @@
           <div class="user-list">
             <div 
               v-for="user in userList" 
-              :key="user.id" 
+              :key="user.userId" 
               class="user-item"
             >
               <div class="user-info">
-                <div class="user-name">{{ user.username }}
-                  <span class="user-status" :class="{ 'enabled': user.enabled, 'disabled': !user.enabled }">
-                    {{ user.enabled ? '正常' : '已禁用' }}
+                <div class="user-name">{{ user.userName }}
+                  <span class="user-status" :class="{ 'enabled': user.enable, 'disabled': !user.enable }">
+                    {{ user.enable ? '正常' : '已禁用' }}
                   </span>
                 </div>
                 <div class="user-meta">
-                  <span>邮箱: {{ user.email }}</span>
+                  <span>邮箱: {{ user.userEmail }}</span>
                   <span>角色: {{ user.role }}</span>
-                  <span>注册时间: {{ formatDate(user.registerTime) }}</span>
+                  <span>注册时间: {{ formatDate(user.joinDate) }}</span>
                 </div>
               </div>
               <div class="user-actions">
                 <button 
-                  v-if="user.role !== 'superAdmin'" 
+                  v-if="isAdmin === 'superAdmin'" 
                   @click="changeUserRole(user)" 
                   class="action-button role-button"
                 >
                   {{ user.role === 'user' ? '设为管理员' : '设为普通用户' }}
                 </button>
                 <button 
-                  v-if="user.role !== 'superAdmin'" 
+                  v-if="(isAdmin === 'admin' && user.role === 'user') || isAdmin === 'superAdmin'" 
                   @click="toggleUserStatus(user)" 
                   class="action-button delete-button"
-                  :class="{ 'disabled-button': user.enabled, 'enable-button': !user.enabled }"
+                  :class="{ 'disabled-button': user.enable, 'enable-button': !user.enable }"
                 >
-                  {{ user.enabled ? '禁用' : '启用' }}
+                  {{ user.enable ? '禁用' : '启用' }}
                 </button>
-                <span v-else class="admin-label">超级管理员</span>
+                <span v-else class="admin-label">无法对此用户操作</span>
               </div>
             </div>
             
@@ -219,14 +241,14 @@ import { useRouter } from 'vue-router';
 import { getUserInfo } from '../api/User';
 import { useToast } from 'vue-toastification';
 import { getImagesPageName } from '../api/File';
-import { AdminPage } from '../api/Admin';
+import { AdminPage, getUserList } from '../api/Admin';
 import { deleteWallpaper } from '../api/File';
 
 const toast = useToast();
 const router = useRouter();
 
 const loading = ref(true);
-const isAdmin = ref(false);
+const isAdmin = ref('');
 const activeTab = ref('files'); // 默认激活文件管理标签
 
 // 文件管理相关状态
@@ -240,9 +262,10 @@ const fileFilterStatus = ref('all'); // 'all', 'audited', 'unaudited'
 // 用户管理相关状态
 const userList = ref();
 const userCurrentPage = ref(1);
-const userPageSize = ref(10);
+const userPageSize = ref(6);
 const userTotal = ref(0);
 const userSearchQuery = ref('');
+const userFilterStatus = ref('all'); // 'all', 'admin', 'user'
 
 // 预览状态
 const showPreview = ref(false);
@@ -279,19 +302,18 @@ onMounted(() => {
   checkAdminPermission().then(() => {
     if (isAdmin.value) {
       loadFiles();
-      loadUsers(); // 如果有用户管理API，可以在这里加载用户数据
     }
   });
 });
 
 // 监听标签页切换
 function onTabChange(tab:any) {
+  activeTab.value = tab;
   if (tab === 'files') {
     loadFiles();
   } else if (tab === 'users') {
     loadUsers();
   }
-  activeTab.value = tab;
 }
 
 // 按审核状态过滤文件
@@ -301,35 +323,29 @@ function filterFilesByStatus(status:any) {
   loadFiles();
 }
 
+// 按角色过滤用户
+function filterUsersByStatus(status:any) {
+  userFilterStatus.value = status;
+  userCurrentPage.value = 1;
+  loadUsers();
+}
+
 // 加载文件列表
 async function loadFiles() {
   try {
     let response;
     // 根据搜索查询和审核状态加载文件
-    if (fileSearchQuery.value) {
+    if (fileSearchQuery.value != '') {
       response = await getImagesPageName(fileCurrentPage.value, filePageSize.value, fileSearchQuery.value);
+      fileFilterStatus.value = 'all'
     } else {
-      response = await AdminPage(fileCurrentPage.value, filePageSize.value);
+      response = await AdminPage(fileCurrentPage.value, filePageSize.value, fileFilterStatus.value);
     }
     
     if (response.data.code === 200) {
-      // 如果后端API支持按审核状态筛选，这里需要修改
-      // 目前我们先在前端进行筛选
-      let files = response.data.data.records;
-      
-      // 根据审核状态筛选文件
-      if (fileFilterStatus.value === 'audited') {
-        // 假设文件对象有audited属性，值为boolean
-        files = files.filter((file:any) => file.status === '已审核');
-      } else if (fileFilterStatus.value === 'unaudited') {
-        files = files.filter((file:any) => file.status === '未审核');
-      }
-      
-      fileList.value = files;
-      fileTotal.value = files.length;
-      // 与Home.vue保持一致，同时设置当前页和总页数
-      fileCurrentPage.value = 1; // 由于是前端筛选，重置为第一页
-      // fileTotalPages.value = response.data.data.pages; // 如果需要总页数可以添加这个
+      fileList.value = response.data.data.records;
+      fileTotal.value = response.data.data.total;
+      fileCurrentPage.value = response.data.data.current;
     } else {
       toast.error("获取文件列表失败");
     }
@@ -372,16 +388,21 @@ function nextFilePage() {
 // 预览文件功能已移除
 
 // 审核文件
-import { updateFileAuditStatus } from '../api/File';
+import { updateFileAuditStatus } from '../api/Admin';
 
 function auditFile(file:any) {
   // 实现文件审核逻辑
   // 调用后端API来更新文件的审核状态
-  updateFileAuditStatus(file.fileId, !file.audited).then(response => {
+  updateFileAuditStatus(file.fileId, file.status).then(response => {
     if (response.data.code === 200) {
       // 更新成功后，切换文件的审核状态
-      file.audited = !file.audited;
-      toast.info(`文件已${file.audited ? '通过审核' : '取消审核'}: ${file.fileTitle}`);
+      let audit = true
+      if (file.status == '未审核') {
+        audit = true
+      } else {
+        audit = false
+      }
+      toast.info(`文件已${audit ? '通过审核' : '取消审核'}: ${file.fileTitle}`);
       
       // 重新加载当前筛选的文件列表
       loadFiles();
@@ -428,18 +449,18 @@ function formatDate(dateString:any) {
   return date.toLocaleDateString('zh-CN');
 }
 
-// 加载用户列表（模拟数据）
+// 加载用户列表
 async function loadUsers() {
   try {
-    // 模拟用户数据
-    const mockUsers = [
-      { id: 1, username: 'admin', email: 'admin@example.com', role: 'superAdmin', registerTime: '2023-01-01', enabled: true },
-      { id: 2, username: 'user1', email: 'user1@example.com', role: 'user', registerTime: '2023-02-01', enabled: true },
-      { id: 3, username: 'user2', email: 'user2@example.com', role: 'user', registerTime: '2023-03-01', enabled: false }
-    ];
+    const response = await getUserList(userCurrentPage.value, userPageSize.value, userFilterStatus.value)
     
-    userList.value = mockUsers;
-    userTotal.value = mockUsers.length;
+    if (response.data.code === 200) {
+      userList.value = response.data.data.records;
+      userTotal.value = response.data.data.total;
+      userCurrentPage.value = response.data.data.current;
+    } else {
+      toast.error("获取用户列表失败");
+    }
   } catch (error) {
     console.error('获取用户列表失败:', error);
     toast.error("获取用户列表失败");
@@ -485,8 +506,8 @@ function changeUserRole(user:any) {
 // 启用/禁用用户
 function toggleUserStatus(user:any) {
   // 实现启用/禁用用户逻辑
-  user.enabled = !user.enabled;
-  toast.info(`${user.enabled ? '启用' : '禁用'}用户: ${user.username}`);
+  user.enable = !user.enable;
+  toast.info(`${user.enable ? '启用' : '禁用'}用户: ${user.username}`);
 }
 
 // 检查管理员权限
@@ -500,8 +521,8 @@ async function checkAdminPermission() {
       const userData = response.data.data;
       
       // 检查用户角色是否为admin
-      if (userData.role && userData.role === 'superAdmin') {
-        isAdmin.value = true;
+      if (userData.role && (userData.role === 'superAdmin' || userData.role === 'admin')) {
+        isAdmin.value = userData.role;
       } else {
         toast.error("权限不足");
         router.push('/profile');
@@ -637,7 +658,7 @@ async function checkAdminPermission() {
   box-shadow: 0 2px 8px rgba(66, 185, 131, 0.3);
 }
 
-.file-filters {
+.file-filters, .user-filters {
   margin-bottom: 25px;
 }
 
@@ -891,6 +912,11 @@ async function checkAdminPermission() {
   text-align: center;
   padding: 40px;
   color: #999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+  width: 100%;
 }
 
 .pagination {

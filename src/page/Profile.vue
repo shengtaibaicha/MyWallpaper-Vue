@@ -55,6 +55,7 @@
             <div class="wallpaper-title">{{ wallpaper.fileTitle }}</div>
             <div class="wallpaper-meta">
               <span class="upload-date">{{ formatDate(wallpaper.uploadTime) }}</span>
+              <div class="upload-date">{{ wallpaper.status }}</div>
             </div>
           </div>
           <div class="wallpaper-actions">

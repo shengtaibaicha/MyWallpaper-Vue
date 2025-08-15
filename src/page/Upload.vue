@@ -27,7 +27,7 @@
           <label class="file-label">壁纸分类</label>
           <select v-model="selectedCategory" class="category-select">
             <option value="">请选择分类</option>
-            <option v-for="tag in tags" :key="tag.tagId" :value="tag.tagName">{{ tag.tagName }}</option>
+            <option v-for="tag in tags" :key="tag.tagId" :value="tag.tagId">{{ tag.tagName }}</option>
           </select>
         </div>
         
@@ -78,7 +78,6 @@ const filesToUpload = ref<File[]>([]);
 const selectedCategory = ref('');
 const router = useRouter();
 const tags = ref();
-const tagId = ref();
 const isDragOver = ref(false);
 
 const up = ref('确认上传')
@@ -162,8 +161,7 @@ async function uploading() {
     for (const file of filesToUpload.value) {
       const formData = new FormData();
       formData.append('file', file);
-      formData.append('tagId', tagId.value)
-      console.log(formData.get('file'))
+      formData.append('tagId', selectedCategory.value)
 
       // 假设使用之前项目中的request工具
       const response = await Upload(formData);
@@ -171,10 +169,6 @@ async function uploading() {
       if (response.data.code == 200) {
         toast.success(`文件 ${file.name} 上传成功，请等待审核后查看！`)
       } else {
-        toast.info(`文件 ${file.name} 上传失败: ${response.data.message}`)
-      }
-
-      if (response.data.code != 200) {
         toast.info(`文件 ${file.name} 上传失败: ${response.data.message}`)
       }
     }
