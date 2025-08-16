@@ -296,6 +296,7 @@ const handleDeleteWallpaper = async (fileId: string) => {
       closePreview();
       // 刷新壁纸列表
       fetchUserWallpapers(currentPage.value, pageSize.value);
+      fetchUserInfo()
     } else {
       toast.error("删除失败: " + response.data.message);
     }

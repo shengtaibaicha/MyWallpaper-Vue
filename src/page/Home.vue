@@ -55,7 +55,10 @@ import { getImagesPageByTag, getTags } from '../api/Tag';
 import router from '../router';
 import { useToast } from 'vue-toastification'
 import { Star, StarFilled, Download as DownloadIcon } from '@element-plus/icons-vue';
+import { getUserInfo } from '../api/User';
+import { useUserStore } from '../store/useUser';
 
+const store = useUserStore()
 const toast = useToast()
 const loading = ref(false);
 const selectedCategory = ref('');
@@ -67,6 +70,7 @@ onMounted(() => {
   console.log('Home组件已挂载');
   fetchData(currentPage.value, pageSize.value)
   getTag()
+  checkUser()
 });
 
 // 示例壁纸数据
@@ -102,6 +106,19 @@ const nextPage = () => {
   }
   fetchData(currentPage.value, pageSize.value)
 };
+
+async function checkUser() {
+  try {
+    const response = await getUserInfo()
+    if (response.data.code != 200) {
+      store.token = ''
+      router.replace('/home')
+    }
+  } catch {
+    store.token = ''
+    router.replace('/home')
+  }
+}
 
 async function selected(tagname:string, tagId:number) {
   if (selectedCategory.value == '') {
@@ -149,38 +166,43 @@ const closePreview = () => {
   document.body.style.overflow = 'auto';
 };
 
-  const getDownload = async (filename:any) => {
-    try {
-      const response = await Download(filename)
-  
-    // 创建Blob对象
-    const blob = new Blob([response.data], { 
-      type: response.headers['content-type'] // 使用响应头中的Content-Type
-    });
-    
-    // 创建下载链接
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    
-    // 从响应头获取文件名（后端已编码）
-    const contentDisposition = response.headers['content-disposition'];
-    const fileNameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
-    const fileName = fileNameMatch ? decodeURIComponent(fileNameMatch[1]) : 'download.jpg';
-    const name = '[生态白茶壁纸站]' + fileName.split("_")[1]
+const getDownload = async (filename:any) => {
+  try {
+    const response = await Download(filename)
 
-    a.download = name;
-    document.body.appendChild(a);
-    a.click();
-    
-    // 释放资源
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    } catch(err: any) {
+  // 创建Blob对象
+  const blob = new Blob([response.data], { 
+    type: response.headers['content-type'] // 使用响应头中的Content-Type
+  });
+  
+  // 创建下载链接
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  
+  // 从响应头获取文件名（后端已编码）
+  const contentDisposition = response.headers['content-disposition'];
+  const fileNameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
+  const fileName = fileNameMatch ? decodeURIComponent(fileNameMatch[1]) : 'download.jpg';
+  const name = '[生态白茶壁纸站]' + fileName.split("_")[1]
+
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  
+  // 释放资源
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  } catch (err: any) {
+    if (err.status == 500) {
+      toast.error("当前用户已被禁用，请联系管理员！")
+    } else {
       toast.warning("登录信息过期，请重新登录！")
       router.replace("/login")
     }
   }
+}
+
 const fetchData = async (page:number, size:number) => {
   loading.value = true;  // 开始加载，显示加载状态
   try {

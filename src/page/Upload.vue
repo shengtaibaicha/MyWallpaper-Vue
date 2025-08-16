@@ -172,7 +172,6 @@ async function uploading() {
         toast.info(`文件 ${file.name} 上传失败: ${response.data.message}`)
       }
     }
-
     fileSelected.value = true
     up.value = '确认上传'
     filesToUpload.value = [];

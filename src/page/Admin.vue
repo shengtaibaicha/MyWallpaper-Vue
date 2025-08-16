@@ -190,7 +190,7 @@
                 </button>
                 <button 
                   v-if="(isAdmin === 'admin' && user.role === 'user') || isAdmin === 'superAdmin'" 
-                  @click="toggleUserStatus(user)" 
+                  @click="changeUserStatus(user)" 
                   class="action-button delete-button"
                   :class="{ 'disabled-button': user.enable, 'enable-button': !user.enable }"
                 >
@@ -241,7 +241,7 @@ import { useRouter } from 'vue-router';
 import { getUserInfo } from '../api/User';
 import { useToast } from 'vue-toastification';
 import { getImagesPageName } from '../api/File';
-import { AdminPage, getUserList } from '../api/Admin';
+import { AdminPage, getUserList, userStatus } from '../api/Admin';
 import { deleteWallpaper } from '../api/File';
 
 const toast = useToast();
@@ -385,8 +385,6 @@ function nextFilePage() {
   }
 }
 
-// 预览文件功能已移除
-
 // 审核文件
 import { updateFileAuditStatus } from '../api/Admin';
 
@@ -504,10 +502,15 @@ function changeUserRole(user:any) {
 }
 
 // 启用/禁用用户
-function toggleUserStatus(user:any) {
-  // 实现启用/禁用用户逻辑
-  user.enable = !user.enable;
-  toast.info(`${user.enable ? '启用' : '禁用'}用户: ${user.username}`);
+async function changeUserStatus(user:any) {
+  const response = await userStatus(user.userId)
+  if (response.data.code == 200) {
+    // 实现启用/禁用用户逻辑
+    user.enable = !user.enable;
+    toast.info(`${user.enable ? '启用' : '禁用'}用户: ${user.userName}`);
+  } else {
+    toast.error(response.data.message);
+  }
 }
 
 // 检查管理员权限

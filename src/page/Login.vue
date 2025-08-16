@@ -71,6 +71,7 @@ async function login() {
     const store = useUserStore()
     if (response.data.code == 200) {
       store.token = response.data.data.token
+      store.redisKey = ''
       refreshParent()
     } else {
       toast.warning(response.data.message)

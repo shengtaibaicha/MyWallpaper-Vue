@@ -94,9 +94,10 @@ async function register() {
   const response = await userRegister(username.value, password.value, email.value, code.value)
   if (response.data.code == 200) {
     toast.warning("注册成功！")
+    store.redisKey = ''
     router.replace('/login')
   } else {
-    confirm(response.data.message)
+    toast.error(response.data.message)
   }
 }
 

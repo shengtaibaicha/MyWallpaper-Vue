@@ -37,3 +37,14 @@ export function getUserList(page:number, size:number, role:string) {
     }
   });
 }
+
+// 修改用户状态
+export function userStatus(userId:string) {
+  return request({
+    url: '/wallpaper/admin/status',
+    method: 'put',
+    data: {
+      userId
+    }
+  });
+}
