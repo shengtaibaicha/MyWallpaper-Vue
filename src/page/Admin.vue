@@ -349,8 +349,11 @@ async function loadFiles() {
     } else {
       toast.error("获取文件列表失败");
     }
-  } catch (error) {
-    console.error('获取文件列表失败:', error);
+  } catch (error:any) {
+    if (error.status === 403) {
+      toast.error("当前用户权限不足");
+    }
+    // console.error('获取文件列表失败:', error);
     toast.error("获取文件列表失败");
   }
 }

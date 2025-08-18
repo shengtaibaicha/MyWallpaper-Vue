@@ -6,7 +6,7 @@ import { getActivePinia } from 'pinia';
 const request = axios.create({
   // baseURL: "http://localhost:8088", // API 基础路径
   // baseURL: 'http://59.153.164.121:8088',
-  baseURL: 'http://localhost:8888',
+  // baseURL: 'http://localhost:8888',
   timeout: 600000, // 请求超时时间
 });
 
@@ -35,11 +35,6 @@ request.interceptors.response.use(
   (response) => {
     // 对响应数据做点什么
     const res = response;
-    // if (res.code !== 200) {
-    //   // 处理业务错误
-    //   console.error('业务错误:', res.code);
-    //   return Promise.reject(new Error(res.message || 'Error'));
-    // }
     return res;
   },
   (error) => {

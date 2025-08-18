@@ -42,6 +42,13 @@
           <div class="preview-item" v-for="(url, index) in previewUrls" :key="index" @mouseenter="showDeleteIcon(index)" @mouseleave="hideDeleteIcon(index)">
             <img :src="url" :alt="'预览图片 ' + (index + 1)" />
             <div class="file-name">{{ fileNames[index] }}</div>
+            <!-- 上传进度条 -->
+            <div class="upload-progress" v-if="isUploading">
+              <div class="progress-bar">
+                <div class="progress-fill" :style="{ width: uploadProgress[index] + '%' }"></div>
+              </div>
+              <div class="progress-text">{{ uploadProgress[index] }}%</div>
+            </div>
             <div 
               class="delete-overlay" 
               v-if="showDelete[index]" 
@@ -79,6 +86,10 @@ const selectedCategory = ref('');
 const router = useRouter();
 const tags = ref();
 const isDragOver = ref(false);
+
+// 上传进度相关
+const uploadProgress = ref<number[]>([]);
+const isUploading = ref(false);
 
 const up = ref('确认上传')
 
@@ -157,29 +168,72 @@ const handleDrop = (e: DragEvent) => {
 async function uploading() {
   // 这里添加文件上传逻辑
   try {
+    isUploading.value = true;
+    // 初始化进度数组
+    uploadProgress.value = Array(filesToUpload.value.length).fill(0);
+    
     // 上传每个文件
-    for (const file of filesToUpload.value) {
+    for (let i = 0; i < filesToUpload.value.length; i++) {
+      const file = filesToUpload.value[i];
       const formData = new FormData();
       formData.append('file', file);
       formData.append('tagId', selectedCategory.value)
 
-      // 假设使用之前项目中的request工具
-      const response = await Upload(formData);
-
-      if (response.data.code == 200) {
-        toast.success(`文件 ${file.name} 上传成功，请等待审核后查看！`)
-      } else {
-        toast.info(`文件 ${file.name} 上传失败: ${response.data.message}`)
+      // 使用axios进行上传并跟踪进度
+      // Upload函数接受FormData和onUploadProgress回调函数作为参数
+      // onUploadProgress回调函数用于接收上传进度事件
+      try {
+        const response: any = await Upload(formData, (progressEvent) => {
+          // 检查progressEvent.total是否存在，确保可以计算进度
+          // 添加更多的调试信息来帮助诊断问题
+          // console.log('Progress event received:', progressEvent);
+          // console.log(`Progress details - loaded: ${progressEvent.loaded}, total: ${progressEvent.total}, lengthComputable: ${progressEvent.lengthComputable}`);
+          
+          // 即使loaded和total相同，也要触发进度更新
+          if (progressEvent.total || progressEvent.loaded) {
+            // 计算上传进度百分比
+            let progress = 0;
+            if (progressEvent.total) {
+              progress = Math.round((progressEvent.loaded / progressEvent.total) * 100);
+            } else if (progressEvent.loaded) {
+              // 如果total不存在但loaded存在，显示一个估计进度
+              progress = Math.min(99, Math.round((progressEvent.loaded / (1024 * 1024)) * 100)); // 假设最大1MB
+            }
+            
+            // 在控制台打印实时进度
+            // console.log(`文件 ${file.name} 上传进度: ${progress}%`);
+            // 更新对应文件的进度
+            uploadProgress.value[i] = progress;
+            // 触发响应式更新
+            uploadProgress.value = [...uploadProgress.value];
+          } else {
+            // 如果total和loaded都不存在，记录警告信息
+            console.warn('ProgressEvent.total and ProgressEvent.loaded are not available');
+          }
+        });
+        
+        if (response.data.code == 200) {
+          toast.success(`文件 ${file.name} 上传成功，请等待审核后查看！`)
+        } else {
+          toast.info(`文件 ${file.name} 上传失败: ${response.data.message}`)
+        }
+      } catch (error: any) {
+        console.error('上传错误:', error);
+        toast.error(`文件 ${file.name} 上传失败: ${error.message}`);
       }
     }
+    
+    isUploading.value = false;
     fileSelected.value = true
     up.value = '确认上传'
     filesToUpload.value = [];
     fileNames.value = [];
     previewUrls.value = [];
+    uploadProgress.value = [];
 
   } catch (error:any) {
     console.error('上传错误:', error);
+    isUploading.value = false;
     fileSelected.value = true
     up.value = '确认上传'
     toast.error("上传发生错误！")
@@ -679,6 +733,37 @@ async function fetchUserInfo() {
   /* 添加一些额外的样式调整 */
   font-weight: 500;
   /* 移除border-bottom，避免影响布局 */
+}
+
+/* 上传进度条样式 */
+.upload-progress {
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.progress-bar {
+  width: 100%;
+  height: 6px;
+  background-color: #e0e0e0;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 5px;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #409eff, #1890ff);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.progress-text {
+  text-align: center;
+  font-size: 0.7rem;
+  color: #666;
+  font-weight: 500;
 }
 
 .delete-overlay {

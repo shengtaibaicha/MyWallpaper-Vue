@@ -23,11 +23,12 @@ export function getKaptcha() {
 }
 
 // 上传图片
-export function Upload(file:FormData) {
+export function Upload(file:FormData, onUploadProgress?: (progressEvent: import('axios').AxiosProgressEvent) => void) {
   return request({
     url: 'wallpaper/file/upload',
     method: 'post',
     data: file, // 将FormData对象作为请求体
+    onUploadProgress: onUploadProgress, // 添加进度回调
     headers: {
       'Content-Type': 'multipart/form-data' // 确保使用正确的Content-Type
     }
