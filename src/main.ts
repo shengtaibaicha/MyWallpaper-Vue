@@ -21,7 +21,7 @@ const pinia = createPinia()
 pinia.use(piniaPluginPersistedstate)
 
 const app = createApp(App)
-app.use(router).use(pinia).use(ElementPlus).mount('#app')
+app.use(pinia).use(router).use(ElementPlus)
 // 注册插件，可配置全局默认选项
 app.use(Toast, {
   position: 'top-center', // 默认位置（top-right/top-left/bottom-right等）
@@ -36,3 +36,5 @@ app.use(VueLazyload, {
   loading: 'loading1.gif',  // 加载中显示的占位图
   attempt: 1  // 加载失败重试次数
 })
+
+app.mount('#app')

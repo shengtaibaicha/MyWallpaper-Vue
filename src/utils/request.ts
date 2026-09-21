@@ -12,8 +12,7 @@ function clearSession(): void {
   const pinia = getActivePinia()
   if (!pinia) return
   const store = useUserStore(pinia)
-  store.token = ''
-  store.redisKey = ''
+  store.clearSession()
 }
 
 request.interceptors.request.use((config) => {

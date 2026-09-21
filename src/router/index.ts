@@ -1,52 +1,28 @@
-import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router';
-import Home from '../page/Home.vue';
-import Upload from '../page/Upload.vue';
-import Login from '../page/Login.vue';
-import Register from '../page/Register.vue';
-import Profile from '../page/Profile.vue';
-import Admin from '../page/Admin.vue'
+import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 
-const routes: Array<RouteRecordRaw> = [
-  {
-    path: '/home',
-    name: 'Home',
-    component: Home
-  },
-  {
-    path: '/upload',
-    name: 'Upload',
-    component: Upload
-  },
-  {
-    path: '/login',
-    name: 'Login',
-    component: Login
-  },
-  {
-    path: '/register',
-    name: 'Register',
-    component: Register
-  },
-  {
-    path:'/profile',
-    name:'Profile',
-    component: Profile
-  },
-  {
-    path:'/admin',
-    name:'Admin',
-    component: Admin
-  },
-  {
-    path:'/',
-    redirect:'/home'
-  }
-  
-];
+import { useUserStore } from '../store/useUser'
+import { resolveAccess, type AccessMeta } from './access'
 
-const router = createRouter({
-  history: createWebHistory(),
-  routes
-});
+const routes: RouteRecordRaw[] = [
+  { path: '/home', name: 'Home', component: () => import('../page/Home.vue') },
+  { path: '/upload', name: 'Upload', component: () => import('../page/Upload.vue'), meta: { requiresAuth: true } },
+  { path: '/login', name: 'Login', component: () => import('../page/Login.vue'), meta: { guestOnly: true } },
+  { path: '/register', name: 'Register', component: () => import('../page/Register.vue'), meta: { guestOnly: true } },
+  { path: '/profile', name: 'Profile', component: () => import('../page/Profile.vue'), meta: { requiresAuth: true } },
+  { path: '/admin', name: 'Admin', component: () => import('../page/Admin.vue'), meta: { requiresAdmin: true } },
+  { path: '/', redirect: '/home' },
+  { path: '/:pathMatch(.*)*', redirect: '/home' },
+]
 
-export default router;
+const router = createRouter({ history: createWebHistory(), routes })
+
+router.beforeEach((to) => {
+  const store = useUserStore()
+  return resolveAccess(to.meta as AccessMeta, {
+    token: store.token,
+    role: store.user?.role ?? '',
+    path: to.fullPath,
+  })
+})
+
+export default router
