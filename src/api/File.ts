@@ -1,107 +1,52 @@
-// src/api/user.js
-import request from '../utils/request';
+import type { AxiosProgressEvent } from 'axios'
 
+import request from '../utils/request'
+import type { ApiResult, CollectionData, PageResult, Wallpaper } from '../types/api'
 
-// 下载图片
-export function Download(filename:String) {
-  return request({
-    url: 'wallpaper/file/download',
-    method: 'get',
-    responseType:'blob',
-    params:{
-      fileName:filename
-    },
-  });
+// Download 下载原始壁纸文件。
+export function Download(filename: string) {
+  return request.get<Blob>('/wallpaper/file/download', { responseType: 'blob', params: { fileName: filename } })
 }
 
-// 获取验证码图片
+// getKaptcha 获取验证码图片及响应头中的验证码键。
 export function getKaptcha() {
-  return request({
-    url: 'wallpaper/user/captcha',
-    method: 'get',
-  });
+  return request.get<ApiResult<string>>('/wallpaper/user/captcha')
 }
 
-// 上传图片
-export function Upload(file:FormData, onUploadProgress?: (progressEvent: import('axios').AxiosProgressEvent) => void) {
-  return request({
-    url: 'wallpaper/file/upload',
-    method: 'post',
-    data: file, // 将FormData对象作为请求体
-    onUploadProgress: onUploadProgress, // 添加进度回调
-    headers: {
-      'Content-Type': 'multipart/form-data' // 确保使用正确的Content-Type
-    }
-  });
+// Upload 上传一张壁纸并报告进度。
+export function Upload(file: FormData, onUploadProgress?: (event: AxiosProgressEvent) => void) {
+  return request.post<ApiResult<{ fileId: string }>>('/wallpaper/file/upload', file, {
+    onUploadProgress,
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
 }
 
-// 分页获取图片列表
-export function getImagesPage(page:number, size:number) {
-  return request({
-    url: '/wallpaper/file/find/page',
-    method: 'get',
-    params:{
-      page:page,
-      size:size
-    },
-  });
+// getImagesPage 分页获取公开壁纸。
+export function getImagesPage(page: number, size: number) {
+  return request.get<ApiResult<PageResult<Wallpaper>>>('/wallpaper/file/find/page', { params: { page, size } })
 }
 
-// 根据名字分页获取图片列表
-export function getImagesPageName(page:number, size:number, name:string) {
-  return request({
-    url: '/wallpaper/file/find/name',
-    method: 'get',
-    params:{
-      page:page,
-      size:size,
-      name:name
-    },
-  });
+// getImagesPageName 按名称搜索公开壁纸。
+export function getImagesPageName(page: number, size: number, name: string) {
+  return request.get<ApiResult<PageResult<Wallpaper>>>('/wallpaper/file/find/name', { params: { page, size, name } })
 }
 
-// 获取用户上传的壁纸
-export function getUserWallpapers(page:number, size:number) {
-  return request({
-    url: '/wallpaper/file/user/page',
-    method: 'get',
-    params:{
-      page:page,
-      size:size
-    },
-  });
+// getUserWallpapers 获取当前用户上传的壁纸。
+export function getUserWallpapers(page: number, size: number) {
+  return request.get<ApiResult<PageResult<Wallpaper>>>('/wallpaper/file/user/page', { params: { page, size } })
 }
 
-// 删除壁纸
-export function deleteWallpaper(fileId:string) {
-  return request({
-    url: '/wallpaper/file/delete',
-    method: 'delete',
-    params:{
-      fileId:fileId
-    },
-  });
+// deleteWallpaper 删除当前用户拥有的壁纸。
+export function deleteWallpaper(fileId: string) {
+  return request.delete<ApiResult<null>>('/wallpaper/file/delete', { params: { fileId } })
 }
 
-// 重命名壁纸
-export function renameWallpaper(fileId:number, newName:string) {
-  return request({
-    url: '/wallpaper/file/rename',
-    method: 'put',
-    data:{
-      fileId:fileId,
-      newName:newName
-    },
-  });
+// toggleFavorite 切换当前用户的收藏状态。
+export function toggleFavorite(fileId: string) {
+  return request.post<ApiResult<null>>('/wallpaper/file/collect', { fileId })
 }
 
-// 切换壁纸收藏状态
-export function toggleFavorite(fileId:string) {
-  return request({
-    url: '/wallpaper/file/collect',
-    method: 'post',
-    data:{
-      fileId
-    }
-  });
+// getCollections 获取当前用户收藏的壁纸 ID。
+export function getCollections() {
+  return request.get<ApiResult<CollectionData>>('/wallpaper/file/collections')
 }

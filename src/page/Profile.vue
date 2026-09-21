@@ -106,10 +106,6 @@
         <button class="close-btn" @click="closePreview">&times;</button>
         <img v-lazy="currentWallpaper.fileUrl" :alt="currentWallpaper.fileTitle" class="preview-img" />
         <div class="preview-controls">
-          <div class="rename-section">
-            <input type="text" v-model="newWallpaperName" placeholder="输入新名称" class="rename-input">
-            <el-button @click="renameWallpaper()" type="primary" round>重命名</el-button>
-          </div>
           <el-button @click="handleDeleteWallpaper(currentWallpaper.fileId)" type="danger" round>删除壁纸</el-button>
         </div>
       </div>
@@ -121,7 +117,7 @@
 import { ref, onMounted } from 'vue';
 import { ElButton } from 'element-plus';
 import { useRouter } from 'vue-router';
-import { getUserWallpapers, deleteWallpaper, renameWallpaper as renameWallpaperApi } from '../api/File';
+import { getUserWallpapers, deleteWallpaper } from '../api/File';
 import { getUserInfo } from '../api/User';
 import { useToast } from 'vue-toastification';
 import { useUserStore } from '../store/useUser';
@@ -147,7 +143,6 @@ const totalPages = ref(0);
 // 预览状态
 const showPreview = ref(false);
 const currentWallpaper = ref<any>({});
-const newWallpaperName = ref('');
 
 onMounted(() => {
   fetchUserInfo();
@@ -303,30 +298,6 @@ const handleDeleteWallpaper = async (fileId: string) => {
   } catch (error) {
     console.error('删除壁纸失败:', error);
     toast.error("删除失败，请重试");
-  }
-}
-
-// 重命名壁纸
-const renameWallpaper = async () => {
-  if (!newWallpaperName.value.trim()) {
-    toast.warning("请输入新名称");
-    return;
-  }
-  
-  try {
-    const response = await renameWallpaperApi(currentWallpaper.value.fileId, newWallpaperName.value);
-    if (response.data.code === 200) {
-      toast.success("重命名成功");
-      currentWallpaper.value.fileTitle = newWallpaperName.value;
-      newWallpaperName.value = '';
-      // 刷新壁纸列表
-      fetchUserWallpapers(currentPage.value, pageSize.value);
-    } else {
-      toast.error("重命名失败: " + response.data.message);
-    }
-  } catch (error) {
-    console.error('重命名壁纸失败:', error);
-    toast.error("重命名失败，请重试");
   }
 }
 

@@ -1,48 +1,29 @@
-// src/api/user.js
-import request from '../utils/request';
-import { useUserStore } from '../store/useUser';
+import request from '../utils/request'
+import { useUserStore } from '../store/useUser'
+import type { ApiResult, LoginData, RegisterData, UserInfo } from '../types/api'
 
-// 用户注册
-export function userRegister(username:String, password:String, email:String, code:String) {
+// userRegister 注册普通用户。
+export function userRegister(username: string, password: string, email: string, code: string) {
   const store = useUserStore()
-  return request({
-    url: '/wallpaper/user/register',
-    method: 'post',
-    headers:{
-      'redisKey':store.redisKey
-    },
-    data:{
-      userName:username,
-      userPassword:password,
-      userEmail:email,
-      captchaCode:code
-    },
-    // withCredentials:true
-  });
+  return request.post<ApiResult<RegisterData>>('/wallpaper/user/register', {
+    userName: username,
+    userPassword: password,
+    userEmail: email,
+    captchaCode: code,
+  }, { headers: { redisKey: store.redisKey } })
 }
 
-// 用户登录
-export function userLogin(username:String, password:String, code:String) {
+// userLogin 登录并获取会话令牌。
+export function userLogin(username: string, password: string, code: string) {
   const store = useUserStore()
-  return request({
-    url: '/wallpaper/user/login',
-    method: 'post',
-    headers:{
-      'redisKey':store.redisKey
-    },
-    data:{
-      userName:username,
-      userPassword:password,
-      captchaCode:code
-    },
-    // withCredentials:true
-  });
+  return request.post<ApiResult<LoginData>>('/wallpaper/user/login', {
+    userName: username,
+    userPassword: password,
+    captchaCode: code,
+  }, { headers: { redisKey: store.redisKey } })
 }
 
-// 获取用户信息
+// getUserInfo 获取当前用户资料。
 export function getUserInfo() {
-  return request({
-    url: '/wallpaper/user/info',
-    method: 'get'
-  });
+  return request.get<ApiResult<UserInfo>>('/wallpaper/user/info')
 }

@@ -1,50 +1,22 @@
-import request from '../utils/request';
+import request from '../utils/request'
+import type { AdminUser, ApiResult, PageResult, Wallpaper } from '../types/api'
 
-// 管理员获取分页获取全部文件
-export function AdminPage(page:number, size:number, filter:string) {
-  return request({
-    url: '/wallpaper/admin/file',
-    method: 'get',
-    params: {
-      page,
-      size,
-      filter
-    }
-  });
+// AdminPage 获取后台壁纸分页。
+export function AdminPage(page: number, size: number, filter: string) {
+  return request.get<ApiResult<PageResult<Wallpaper>>>('/wallpaper/admin/file', { params: { page, size, filter } })
 }
 
-// 更新文件审核状态
-export function updateFileAuditStatus(fileId:string, audited:string) {
-  return request({
-    url: '/wallpaper/admin/audit',
-    method: 'put',
-    data:{
-      fileId: fileId,
-      audited: audited,
-    }
-  });
+// updateFileAuditStatus 切换壁纸审核状态。
+export function updateFileAuditStatus(fileId: string, audited: string) {
+  return request.put<ApiResult<null>>('/wallpaper/admin/audit', { fileId, audited })
 }
 
-// 获取用户列表
-export function getUserList(page:number, size:number, role:string) {
-  return request({
-    url: '/wallpaper/admin/user',
-    method: 'get',
-    params:{
-      page,
-      size,
-      role,
-    }
-  });
+// getUserList 获取后台用户分页。
+export function getUserList(page: number, size: number, role: string) {
+  return request.get<ApiResult<PageResult<AdminUser>>>('/wallpaper/admin/user', { params: { page, size, role } })
 }
 
-// 修改用户状态
-export function userStatus(userId:string) {
-  return request({
-    url: '/wallpaper/admin/status',
-    method: 'put',
-    data: {
-      userId
-    }
-  });
+// userStatus 切换用户启用状态。
+export function userStatus(userId: string) {
+  return request.put<ApiResult<null>>('/wallpaper/admin/status', { userId })
 }
