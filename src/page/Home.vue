@@ -118,7 +118,7 @@ async function loadWallpapers(): Promise<void> {
   } catch (error) {
     if (sequence === requestSequence) {
       wallpapers.value = []
-      errorMessage.value = getErrorMessage(error)
+      errorMessage.value = '暂时无法连接壁纸服务，请稍后重试。'
     }
   } finally {
     if (sequence === requestSequence) loading.value = false
@@ -241,6 +241,7 @@ onBeforeUnmount(() => {
 @media (max-width: 640px) {
   .hero { padding: 58px 8px 46px; }
   .hero h1 { font-size: 46px; }
+  .hero h1 { overflow-wrap: anywhere; font-size: clamp(36px, 10.5vw, 42px); line-height: 1.08; }
   .hero > p:not(.hero__eyebrow) { margin-block: 18px 25px; font-size: 15px; }
   .catalog__bar { align-items: flex-start; flex-direction: column; gap: 10px; }
   .category-list { width: calc(100vw - 20px); margin-left: -4px; }

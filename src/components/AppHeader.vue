@@ -169,5 +169,9 @@ button:focus-visible {
   .account-actions {
     grid-column: 2;
   }
+
+  .account-actions .primary-link {
+    display: none;
+  }
 }
 </style>

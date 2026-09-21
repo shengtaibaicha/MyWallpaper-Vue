@@ -94,8 +94,8 @@ onMounted(loadCaptcha)
 </script>
 
 <style scoped>
-.auth-form { display: grid; gap: 18px; }
-.auth-form label { display: grid; gap: 8px; color: #42454b; font-size: 14px; font-weight: 620; }
+.auth-form { min-width: 0; display: grid; gap: 18px; }
+.auth-form label { min-width: 0; display: grid; gap: 8px; color: #42454b; font-size: 14px; font-weight: 620; }
 .captcha-row { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr) 124px; gap: 10px; }
 .captcha-button { height: 48px; overflow: hidden; border: 1px solid var(--color-border); border-radius: 14px; padding: 0; color: var(--color-muted); background: var(--color-surface-soft); cursor: pointer; }
 .captcha-button img { width: 100%; height: 100%; display: block; object-fit: cover; }

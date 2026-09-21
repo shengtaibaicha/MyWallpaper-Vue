@@ -16,5 +16,5 @@ const emit = defineEmits<{ action: [] }>()
 .empty-state { min-height: 320px; display: grid; place-items: center; align-content: center; gap: 10px; padding: 40px 20px; text-align: center; }
 .empty-state__icon { width: 54px; height: 54px; display: grid; place-items: center; border-radius: 50%; color: var(--color-accent); background: var(--color-accent-soft); font-size: 30px; }
 .empty-state h2 { margin: 8px 0 0; font-size: 21px; }
-.empty-state p { max-width: 420px; margin: 0 0 8px; color: var(--color-muted); }
+.empty-state p { max-width: 420px; margin: 0 0 8px; overflow-wrap: anywhere; color: var(--color-muted); }
 </style>
