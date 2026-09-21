@@ -143,6 +143,7 @@ async function uploadAll(): Promise<void> {
   uploading.value = true
   let failures = 0
   for (const item of items.value) {
+	if (item.status === '上传成功') continue
     item.status = '上传中'
     item.error = ''
     const form = new FormData()
